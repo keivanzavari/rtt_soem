@@ -9,11 +9,14 @@ project(soem_beckhoff_drivers)
 #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
 #set(ROS_BUILD_TYPE RelWithDebInfo)
 
- 
-# Do setup in case of ros package, If ROS_ROOT is set, it is                                                                                                 # recommended to use RTT/OCL through the ros packages.                                                                                                       
+
+# Do setup in case of ros package, If ROS_ROOT is set, it is                                                                                                 # recommended to use RTT/OCL through the ros packages.
 #uncomment if you have defined messages
 if(NOT ORO_USE_ROSBUILD)
   find_package(catkin REQUIRED message_generation rtt_roscomm)
+  find_package(catkin REQUIRED COMPONENTS soem soem_master)
+  include_directories(${catkin_INCLUDE_DIRS} ${soem_INCLUDE_DIRS})
+
   add_message_files( FILES
     AnalogMsg.msg
     CommMsgBig.msg
@@ -24,7 +27,7 @@ if(NOT ORO_USE_ROSBUILD)
     EncoderOutMsg.msg
     PSUMsg.msg
     )
-  
+
   generate_messages()
 endif()
 # Set the CMAKE_PREFIX_PATH in case you're not using Orocos through
@@ -33,6 +36,9 @@ find_package(OROCOS-RTT REQUIRED ${RTT_HINTS} )
 # Defines the orocos_* cmake macros. See that file for additional
 # documentation.
 include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
+catkin_package(
+    CATKIN_DEPENDS message_runtime soem_master
+)
 
 if(ORO_USE_ROSBUILD)
   rosbuild_genmsg()
@@ -41,9 +47,9 @@ endif()
 
 ros_generate_rtt_typekit(soem_beckhoff_drivers)
 
-find_package(soem REQUIRED)
-include_directories(${soem_INCLUDE_DIRS})
-  
+# find_package(soem REQUIRED)
+# include_directories(${soem_INCLUDE_DIRS})
+
 orocos_use_package(soem_master)
 
 orocos_plugin(soem_el1xxx src/soem_beckhoff_drivers.cpp src/soem_el1xxx.cpp)
