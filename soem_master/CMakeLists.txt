@@ -11,19 +11,27 @@ find_package(catkin QUIET)
 # documentation.
 include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
-find_package(soem REQUIRED)
-include_directories(${soem_INCLUDE_DIRS})
+## SOEM specific
+find_package(catkin REQUIRED COMPONENTS soem)
 
+include_directories(include ${catkin_INCLUDE_DIRS} ${soem_INCLUDE_DIRS})
+
+# choose what to export
+catkin_package(
+    CATKIN_DEPENDS soem
+    INCLUDE_DIRS include
+    LIBRARIES soem_master
+    # DEPENDS orocos-kdl
+)
 #common commands for building c++ executables and libraries
-orocos_library(soem_driver_factory soem_driver_factory.cpp)
-orocos_component(soem_master soem_master_component.cpp)
+orocos_library(soem_driver_factory src/soem_driver_factory.cpp)
+orocos_component(soem_master src/soem_master_component.cpp)
 target_link_libraries(soem_master soem_driver_factory ${soem_LIBRARIES})
 
-orocos_plugin(soem_plugin soem_plugin.cpp)
+orocos_plugin(soem_plugin src/soem_plugin.cpp)
 
-orocos_install_headers( soem_driver.h soem_driver_factory.h)
+orocos_install_headers( src/soem_driver.h src/soem_driver_factory.h)
 
-install(PROGRAMS setcap.sh DESTINATION lib/${PROJECT_NAME})
+install(PROGRAMS deploy/setcap.sh DESTINATION lib/${PROJECT_NAME})
 
-orocos_generate_package( INCLUDE_DIRS ..)
-
+orocos_generate_package()
