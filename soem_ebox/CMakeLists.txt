@@ -13,6 +13,9 @@ project(soem_ebox)
 #uncomment if you have defined messages
 if(NOT ORO_USE_ROSBUILD)
   find_package(catkin REQUIRED message_generation rtt_roscomm)
+  find_package(catkin REQUIRED COMPONENTS soem soem_master)
+  include_directories(${catkin_INCLUDE_DIRS} ${soem_INCLUDE_DIRS})
+  
   add_message_files( FILES
     EBOXAnalog.msg
     EBOXDigital.msg
@@ -40,8 +43,8 @@ endif()
 ros_generate_rtt_typekit(soem_ebox)
 
 
-find_package(soem REQUIRED)
-include_directories(${soem_INCLUDE_DIRS})
+# find_package(soem REQUIRED)
+# include_directories(${soem_INCLUDE_DIRS})
   
 orocos_use_package(soem_master)
 
