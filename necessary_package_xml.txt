@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package>
+  <name>soem</name>
+  <version>0.0.0</version>
+  <description>The soem library package</description>
+  <maintainer email="openethercatsociety@rt-labs.com">OpenEtherCATsociety</maintainer>
+
+  <license>GNU General Public License</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>
