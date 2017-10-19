@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cp -f necessary_package_xml.txt soem_core/package.xml
+cp -f package_xml_soem_core.txt soem_core/package.xml
 
 
 cp -f CMakeLists_for_soem_core.txt soem_core/CMakeLists.txt
