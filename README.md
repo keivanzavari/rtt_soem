@@ -10,6 +10,7 @@ SOEM version 1.2.5 is needed for the original repository of orocos/rtt_soem whic
 This repositry will link and test integration with the latest version of SOEM.
 
 ## How can you use it?
-- In order for SOEM library to be used in a catkin workspace, CMakeLists file has to be modified, therefore you find a text file at the root of this repository which can be replace the CMakeLists file in `soem_core` directory.
-- catkin packages require a package.xml file. That one is also found here under the name `necessary_package_xml.txt`
+- In order for SOEM library to be used in a catkin workspace, `CMakeLists.txt` file has to be modified, therefore you find a text file at the root of this repository which can replace the CMakeLists file in `soem_core` directory.
+- For the ones who like patch approach, there is also a patch file
+- catkin packages also require a `package.xml` file which is found again at root under the name `necessary_package_xml.txt`
 - copying these can also be done by running `run_me_first.sh`.
