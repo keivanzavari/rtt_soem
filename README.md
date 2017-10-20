@@ -1,6 +1,7 @@
 # rtt_soem
-RTT SOEM EtherCAT components and drivers
+RTT Simple Open EtherCAT Master (SOEM) components and drivers
 
+build is not active yet...
 [![Build Status](https://travis-ci.org/keivanzavari/rtt_soem.svg?branch=master)](https://travis-ci.org/keivanzavari/rtt_soem)
 
 ## Why have I forked it?
