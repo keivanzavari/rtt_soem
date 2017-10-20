@@ -1,6 +1,8 @@
 # rtt_soem
 RTT SOEM EtherCAT components and drivers
 
+[![Build Status](https://travis-ci.org/keivanzavari/rtt_soem.svg?branch=master)](https://travis-ci.org/keivanzavari/rtt_soem)
+
 ## Why have I forked it?
 This repository depends on the SOEM library which was previously hosted on berlios.de.
 The website of berlios is down. In the mean time, the SOEM library source code has moved to [github](https://github.com/OpenEtherCATsociety/SOEM).
