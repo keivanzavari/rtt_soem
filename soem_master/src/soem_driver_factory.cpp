@@ -35,13 +35,28 @@ bool SoemDriverFactory::registerDriver(std::string name,
 {
     Logger::In in("SoemDriverFactor");
     log(Info) << "Registering driver for " << name << endlog();
+
+    // Assign values to the map
+    // std::map<string, int>::value_type is std::pair<string const, int>
+    // so no (important) difference between them
     return m_factory_map.insert(FactoryMap::value_type(name, create_fn)).second;
+
+    // insert returns
+    // a pair, with its member pair::first set to an iterator pointing to
+    // either the newly inserted element or to the element with an equivalent
+    // key in the map. The pair::second element in the pair is set to true if
+    // a new element was inserted or false if an equivalent key already existed.
 }
 
 SoemDriver* SoemDriverFactory::createDriver(ec_slavet* mem_loc)
 {
-    FactoryMap::const_iterator it = m_factory_map.find(std::string(
-            mem_loc->name));
+    // search for the name in the map,
+    // map.find is logarithmic in size.
+    FactoryMap::const_iterator it = m_factory_map.find(
+        std::string(mem_loc->name) );
+
+    // find returns an iterator to the element,
+    // if an element with specified key is found, or map::end otherwise.
     if (it == m_factory_map.end())
     {
         return NULL;
