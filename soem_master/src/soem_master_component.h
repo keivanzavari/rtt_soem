@@ -41,8 +41,7 @@ protected:
     virtual void updateHook();
     virtual void stopHook()
     {
-    }
-    ;
+    };
     virtual void cleanupHook();
 
 private:
@@ -50,8 +49,8 @@ private:
     bool prop_redundant;
     char m_IOmap[4096];
     std::vector<SoemDriver*> m_drivers;
-};//class
+}; //class
 
-}//namespace
+} //namespace
 
 #endif

@@ -46,13 +46,15 @@ using namespace RTT;
 SoemMasterComponent::SoemMasterComponent(const std::string& name) :
     TaskContext(name, PreOperational)
 {
-    this->addProperty("ifname", prop_ifname1="eth0").doc(
-            "interface to which the ethercat device is connected");
-    this->addProperty("ifname2", prop_ifname2="eth1").doc(
-            "Second (redundant) interface to which the ethercat device is connected");
-    this->addProperty("redundant", prop_redundant=false).doc(
-            "Whether to use a redundant nic");
+    this->addProperty("ifname", prop_ifname1="eth0")
+        .doc("Network interface to which the ethercat device is connected");
+    this->addProperty("ifname2", prop_ifname2="eth1")
+        .doc("Second network interface (redundant) to which the ethercat device is connected.");
+    this->addProperty("redundant", prop_redundant=false)
+        .doc("Whether to use a redundant nic, false by default");
+
     SoemDriverFactory& driver_factory = SoemDriverFactory::Instance();
+
     this->addOperation("displayAvailableDrivers",
             &SoemDriverFactory::displayAvailableDrivers, &driver_factory).doc(
             "display all available drivers for the soem master");
@@ -75,37 +77,71 @@ bool SoemMasterComponent::configureHook()
     // initialise SOEM, bind socket to ifname
     if ( ret > 0)
     {
-        log(Info) << "ec_init on " << prop_ifname1 << (prop_redundant ? std::string("and ") + prop_ifname2 : "")<<" succeeded." << endlog();
+        log(Info) << "ec_init on " << prop_ifname1 <<
+        (prop_redundant ? std::string("and ") + prop_ifname2 : "")
+        <<" succeeded." << endlog();
 
-        //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
+        // Initialise, use the default config table (given by False)
+        // see "ethercatconfiglist.h"
+        // This is how they call each other
+        // ec_config --> ec_config_init --> ecx_config_init
+        // Returns workcounter of slave discover datagram = number of slaves found
         if (ec_config_init(FALSE) > 0)
         {
             while (EcatError)
-                {
-                    log(Error) << ec_elist2string() << endlog();
-                }
+            {
+                log(Error) << ec_elist2string() << endlog();
+            }
 
+            /** ec_slavecount is the number of slaves found by configuration
+            * function  and is defined in ethercatmain.h
+            */
             log(Info) << ec_slavecount << " slaves found and configured."
                     << endlog();
             log(Info) << "Request pre-operational state for all slaves"
                     << endlog();
+
+            // ec_slave: Main slave data array. Each slave found on the network
+            // gets its own record. ec_slave[0] is reserved for the master.
+            // Structure gets filled in by the configuration function ec_config().
             ec_slave[0].state = EC_STATE_PRE_OP;
+
+            // Write slave state, if slave = 0 then write to all slaves.
+            // The function does not check if the actual state is changed.
             ec_writestate(0);
+
+            // ec_statecheck(uint16 slave,uint16 reqstate,int timeout)
+            // Check actual slave state. This is a blocking function. returns
+            // the requested state or found state
             // wait for all slaves to reach PRE_OP state
             ec_statecheck(0, EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
 
+            // global variable EC_WKCSIZE gives the number of working devices
             for (int i = 1; i <= ec_slavecount; i++)
             {
-                SoemDriver
-                        * driver = SoemDriverFactory::Instance().createDriver(
-                                &ec_slave[i]);
+                // ec_slave[i].Itype returns the type: for coupler EK1101 this
+                // is 3332 while for ES3104 Analog Input it's 5
+
+                // std::cout << i << "- Itype: " <<  ec_slave[i].Itype
+                // << "\t Dtype: " << ec_slave[i].Dtype << std::endl;
+
+                /**
+                * - ethercatmain contains the different fields of ec_slave
+                * - SoemDriverFactory::Instance() returns a static reference to
+                * class. On that object you can call its createDriver method
+                * which returns a pointer to SoemDriver class.
+                * - SoemDriver* createDriver(ec_slavet* mem_loc);
+                */
+                SoemDriver * driver =
+                SoemDriverFactory::Instance().createDriver(&ec_slave[i]);
+
                 if (driver)
                 {
                     m_drivers.push_back(driver);
                     log(Info) << "Created driver for " << ec_slave[i].name
                             << ", with address " << ec_slave[i].configadr
                             << endlog();
-                    //Adding driver's services to master component
+                    // Adding driver's services to master component
                     this->provides()->addService(driver->provides());
                     log(Info) << "Put configured parameters in the slaves."
                             << endlog();
@@ -114,27 +150,37 @@ bool SoemMasterComponent::configureHook()
                 }
                 else
                 {
+                    // TODO: this warning also gets issued for couplers like EK1101
+                    // while couplers don't need a driver
                     log(Warning) << "Could not create driver for "
                             << ec_slave[i].name << endlog();
                 }
             }
 
+            // Map all PDOs from slaves to IOmap, return IOmap size
             ec_config_map(&m_IOmap);
-            while (EcatError)
-                {
-                    log(Error) << ec_elist2string() << endlog();
-                }
 
-            for (unsigned int i = 0; i < m_drivers.size(); i++)
-                if (!m_drivers[i]->start()){
+            // EcatError is a global variable and is set to TRUE if
+            // error is available in error stack
+            while (EcatError)
+            {
+                log(Error) << ec_elist2string() << endlog();
+            }
+
+            // drivers vector excludes the couplers, so if you have one module,
+            // the size is 1
+            for (unsigned int i = 0; i < m_drivers.size(); i++) {
+                if (!m_drivers[i]->start())
+                {
                     log(Error)<<"Could not start driver for "<<m_drivers[i]<<getName()<<endlog();
                     return false;
                 }
+            }
 
-
-            //Configure distributed clock
-            //ec_configdc();
-            //Read the state of all slaves
+            // Locate DC slaves, measure propagation delays.
+            // Configure distributed clock
+            // ec_configdc();
+            // Read the state of all slaves
 
             //ec_readstate();
 
@@ -261,12 +307,17 @@ void SoemMasterComponent::updateHook()
 
 void SoemMasterComponent::cleanupHook()
 {
-  for (unsigned int i = 0; i < m_drivers.size(); i++){
-    this->provides()->removeService(m_drivers[i]->provides()->getName());
-    delete m_drivers[i];
-  }
+    log(Info) << "Cleanup call, removing the services..." << endlog();
 
-    //stop SOEM, close socket
+    for (unsigned int i = 0; i < m_drivers.size(); i++)
+    {
+        this->provides()->removeService(m_drivers[i]->provides()->getName());
+        delete m_drivers[i];
+    }
+    // empty the vector after deleting the pointers
+    m_drivers.clear();
+
+    // stop SOEM, close socket
     ec_close();
 }
 }//namespace
