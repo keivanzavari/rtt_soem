@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index b54bd56..59e7a98 100644
+index 39bf21f..5458fd4 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,6 +1,13 @@
+@@ -1,6 +1,11 @@
  cmake_minimum_required(VERSION 2.8.4)
  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 -project(SOEM C)
@@ -12,12 +12,10 @@ index b54bd56..59e7a98 100644
 +
 +# project name changed from SOEM C to lower case to be consistent with catkin 
 +project(soem)
-+
-+
  
  if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
    # Default to installing in SOEM source directory
-@@ -44,17 +51,32 @@ file(GLOB SOEM_HEADERS soem/*.h)
+@@ -53,17 +58,32 @@ file(GLOB SOEM_HEADERS soem/*.h)
  file(GLOB OSAL_HEADERS osal/osal.h osal/${OS}/*.h)
  file(GLOB OSHW_HEADERS oshw/${OS}/*.h)
  
@@ -35,6 +33,7 @@ index b54bd56..59e7a98 100644
  include_directories(osal/${OS})
  include_directories(oshw/${OS})
  
++
 +# export include and libraries...
 +catkin_package(INCLUDE_DIRS soem osal osal/${OS} oshw/${OS}
 +              LIBRARIES soem)
@@ -45,14 +44,8 @@ index b54bd56..59e7a98 100644
    ${OSHW_SOURCES}
    ${OSHW_EXTRA_SOURCES})
 -target_link_libraries(soem ${OS_LIBS})
-+
 +# link to catkin libraries
 +target_link_libraries(soem ${OS_LIBS} ${catkin_LIBRARIES})
  
- install(TARGETS soem DESTINATION lib)
- install(FILES
-@@ -66,3 +88,4 @@ install(FILES
- add_subdirectory(test/linux/slaveinfo)
- add_subdirectory(test/linux/eepromtool)
- add_subdirectory(test/linux/simple_test)
-+
+ message("LIB_DIR: ${SOEM_LIB_INSTALL_DIR}")
+ 

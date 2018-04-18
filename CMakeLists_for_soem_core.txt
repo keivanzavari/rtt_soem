@@ -7,19 +7,22 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 # project name changed from SOEM C to lower case to be consistent with catkin 
 project(soem)
 
-
-
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   # Default to installing in SOEM source directory
   set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
 endif()
 
 set(SOEM_INCLUDE_INSTALL_DIR include/soem)
+set(SOEM_LIB_INSTALL_DIR lib)
 
 if(WIN32)
   set(OS "win32")
   include_directories(oshw/win32/wpcap/Include)
-  link_directories(${CMAKE_SOURCE_DIR}/oshw/win32/wpcap/Lib)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    link_directories(${CMAKE_SOURCE_DIR}/oshw/win32/wpcap/Lib/x64)
+  elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    link_directories(${CMAKE_SOURCE_DIR}/oshw/win32/wpcap/Lib)
+  endif()
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /D _CRT_SECURE_NO_WARNINGS")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  /WX")
   set(OS_LIBS wpcap.lib Packet.lib Ws2_32.lib Winmm.lib)
@@ -39,6 +42,10 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "rt-kernel")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-function")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-format")
   set(OS_LIBS "-Wl,--start-group -l${BSP} -l${ARCH} -lkern -ldev -lsio -lblock -lfs -lusb -llwip -leth -li2c -lrtc -lcan -lnand -lspi -lnor -lpwm -ladc -ltrace -lc -lm -Wl,--end-group")
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "rtems")
+  message("Building for RTEMS")
+  set(OS "rtems")
+  set(SOEM_LIB_INSTALL_DIR ${LIB_DIR})
 endif()
 
 message("OS is ${OS}")
@@ -65,6 +72,7 @@ include_directories(osal)
 include_directories(osal/${OS})
 include_directories(oshw/${OS})
 
+
 # export include and libraries...
 catkin_package(INCLUDE_DIRS soem osal osal/${OS} oshw/${OS}
               LIBRARIES soem)
@@ -74,11 +82,12 @@ add_library(soem STATIC
   ${OSAL_SOURCES}
   ${OSHW_SOURCES}
   ${OSHW_EXTRA_SOURCES})
-
 # link to catkin libraries
 target_link_libraries(soem ${OS_LIBS} ${catkin_LIBRARIES})
 
-install(TARGETS soem DESTINATION lib)
+message("LIB_DIR: ${SOEM_LIB_INSTALL_DIR}")
+
+install(TARGETS soem DESTINATION ${SOEM_LIB_INSTALL_DIR})
 install(FILES
   ${SOEM_HEADERS}
   ${OSAL_HEADERS}
@@ -88,4 +97,3 @@ install(FILES
 add_subdirectory(test/linux/slaveinfo)
 add_subdirectory(test/linux/eepromtool)
 add_subdirectory(test/linux/simple_test)
-
